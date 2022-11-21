@@ -7,15 +7,6 @@
 #include <opencv2/opencv.hpp>
 using namespace cv;
 
-u_int8_t p_round(int x) {
-    if (x > 255) {
-        return 255;
-    }
-    if (x < 0) {
-        return 0;
-    }
-    return x;
-}
 
 int getMedian(std::vector<int>& pixels) {
     sort(pixels.begin(), pixels.end());
@@ -75,12 +66,10 @@ void linearMedianFilter(Mat &mat, Mat &res, int r) {
             Vec3b& p = res.at<Vec3b>(i, j);
             if (j == 0) {
                 for (int channel = 0; channel < 3; channel++) {
-                    //std::vector<int> pixels;
                     for (int ip = i - r; ip <= i + r; ++ip) {
                         for (int jp = j - r; jp <= j + r; ++jp) {
                             int actualIp = getActualIndex(ip, 0, mat.rows - 1);
                             int actualJp = getActualIndex(jp, 0, mat.cols - 1);
-                            //pixels.push_back(mat.at<Vec3b>(actualIp, actualJp)[channel]);
                             hist[channel][mat.at<Vec3b>(actualIp, actualJp)[channel]]++;
                         }
                     }
@@ -88,13 +77,10 @@ void linearMedianFilter(Mat &mat, Mat &res, int r) {
                         leftSum[channel] += hist[channel][median[channel]];
                         median[channel]++;
                     }
-                    //p[channel] = getMedian(pixels);
-                    //median[channel] = p[channel];
                     p[channel] = median[channel];
                 }
             } else {
                 for (int channel = 0; channel < 3; channel++) {
-                    //int leftSum = (2*r + 1) * (2*r + 1) / 2;
                     for (int ip= i - r; ip <= i + r; ++ip) {
                         int jp = j - 1 - r;
                         int actualIp = getActualIndex(ip, 0, mat.rows - 1);
@@ -172,15 +158,6 @@ void constantMedianFilter(Mat &mat, Mat &res, int r) {
                 Vec3b& p = res.at<Vec3b>(i, j);
 
                 if (j == 0) {
-                    // for (int ip = i - r; ip <= i + r; ++ip) {
-                    //     for (int jp = j - r; jp <= j + r; ++jp) {
-                    //         int actualIp = getActualIndex(ip, 0, mat.rows - 1);
-                    //         int actualJp = getActualIndex(jp, 0, mat.cols - 1);
-                    //         hist[mat.at<Vec3b>(actualIp, actualJp)[channel]]++;
-                    //     }
-                    // }
-                    
-                    
                     for (int jp = j; jp <= j + r; ++jp) {
                         int actualJp = getActualIndex(jp, 0, mat.cols - 1);
                         int old_i = getActualIndex(i - r - 1, 0, mat.rows - 1);
@@ -267,8 +244,6 @@ bool checkImages(Mat &img1, Mat &img2) {
             for (int channel = 0; channel < 3; channel++) {
                 if (p1[channel] != p2[channel]) {
                     return false;
-                    // std::cout << i << " " << j << " " << (int)p1[channel] << " " << (int)p2[channel] << std::endl;
-                    // flag = false;
                 }
             }
         }
@@ -283,31 +258,28 @@ bool checkImages(Mat &img1, Mat &img2) {
 int main(int argc, char** argv )
 {
     
-    if ( argc != 2 )
-    {
-        printf("usage: DisplayImage.out <Image_Path>\n");
-        return -1;
-    }
-    Mat image1, image2, image3, oldImage;
+    Mat resImage, oldImage;
     oldImage = imread(argv[1], 1);
-    image1 = imread(argv[1], 1);
-    image2 = imread(argv[1], 1);
-    image3 = imread(argv[1], 1);
-    if ( !image1.data )
-    {
-        printf("No image data \n");
-        return -1;
-    }
+    resImage = imread(argv[1], 1);
+    
+    int r = strtoll(argv[3], NULL, 10);
+    int type = strtoll(argv[2], NULL, 10);
     double start = clock();
-    SimpleMedianFilter(oldImage, image1, 1);
-    linearMedianFilter(oldImage, image2, 1);
-    constantMedianFilter(oldImage, image3, 1);
+    if (type == 0) {
+        std::cout << "simple filter" << std::endl;
+        SimpleMedianFilter(oldImage, resImage, r);
+    }
+    if (type == 1) {
+        std::cout << "linear filter" << std::endl;
+        linearMedianFilter(oldImage, resImage, r);
+    }
+    if (type == 2) {
+        std::cout << "constant filter" << std::endl;
+        constantMedianFilter(oldImage, resImage, r);
+    }
     double end = clock();
-    std::cout << (checkImages(image1, image2) && checkImages(image1, image2)) << std::endl;
     
     std::cout << "Время работы: " << (end - start) / CLOCKS_PER_SEC << "s" << std::endl;
-    imwrite("output3.bmp", image3);
-    imwrite("output2.bmp", image2);
-    imwrite("output1.bmp", image1);
+    imwrite(std::string("./outputs/r_") + std::to_string(r) + std::string(".bmp"), resImage);
     return 0;
 }
