@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 2.8)
+project( HoughTransform )
+find_package( OpenCV REQUIRED )
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+add_executable( HoughTransform main.cpp )
+add_executable( Rotate rotation.cpp )
+target_link_libraries( HoughTransform ${OpenCV_LIBS} )
+target_link_libraries( Rotate ${OpenCV_LIBS} )
